@@ -1,22 +1,7 @@
-
-/**
- * オブジェクトリストを順次処理する。
- *
- * @param target オブジェクトリスト
- * @param callback 処理を移譲する関数（引数 オブジェクト, キー)
- * @private
- */
-function _each(target, callback) {
-    var keys = Object.keys(target);
-    keys.forEach(function (key) {
-        callback(target[key], key);
-    });
-}
-
 function filterArray(arr, filter) {
     var ret = [];
     for (var i = 0; i < arr.length; i++) {
-        if (arr[i].url.indexOf(filter) >= 0) {
+        if (filter(arr[i])) {
             ret.push(arr[i]);
         }
     }
@@ -27,6 +12,15 @@ window.addEventListener('load', function () {
     var filterField = document.getElementById('filter');
     var reloadButton = document.getElementById('reloadButton');
     var clearButton = document.getElementById('clearButton');
+    var urlList = document.getElementById('urlList');
+    var sendUrlListButton = document.getElementById('sendUrlListButton');
+
+    sendUrlListButton.addEventListener('click', function () {
+        var list = urlList.value.split('\n');
+        list = filterArray(list, function (val) { return val.indexOf('htt') >= 0; });
+        chrome.extension.sendRequest({'action': 'links', 'links': list}, function (res) {});
+        sendUrlListButton.disabled = true;
+    });
 
     function updateResult() {
         var filter = filterField.value;
@@ -35,7 +29,7 @@ window.addEventListener('load', function () {
             res.forEach(function (record) {
                 var contentRoot = record.files[0];
                 if (contentRoot.url.indexOf(filter) >= 0) {
-                    var files = filterArray(record.files, filter);
+                    var files = filterArray(record.files, function (val) { return val.url.indexOf(filter) >= 0; });
                     msg += '* URL: ' + contentRoot.url + '\n';
                     msg += '* Request Count: ' + files.length + '\n';
                     var totalSize = 0;
@@ -59,4 +53,12 @@ window.addEventListener('load', function () {
     clearButton.addEventListener('click', function () {
         chrome.extension.sendRequest({'action': 'clear'}, function (res) {});
     });
+
+    chrome.extension.onRequest.addListener(
+        function(req, sender, res) {
+            if (req.action === 'finishedLinks') {
+                updateResult();
+                sendUrlListButton.disabled = false;
+            }
+        });
 });

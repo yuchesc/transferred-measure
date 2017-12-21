@@ -5,6 +5,9 @@ function log(msg) {
 var result = [];
 var current = undefined;
 
+
+chrome.extension.sendRequest({'action': 'tabId', 'tabId': chrome.devtools.inspectedWindow.tabId}, function () {});
+
 chrome.devtools.network.onRequestFinished.addListener(
     function (request) {
         if (request.request.url.indexOf('htt') >= 0) {
@@ -23,7 +26,6 @@ chrome.extension.onRequest.addListener(
         if (req.action === 'get') {
             res(result);
         } else if (req.action === 'newpage') {
-            log('Inspect page: ' + req.url);
             if (req.url || !current) {
                 current = {url: req.url, files: []};
                 result.push(current);
@@ -36,6 +38,4 @@ chrome.extension.onRequest.addListener(
     }
 );
 
-//chrome.devtools.inspectedWindow.eval('document.baseURI', function(page_url) {
-    chrome.devtools.panels.create("Transferred", 'image/icon/16.png', 'result.html');
-//});
+chrome.devtools.panels.create("Transferred", 'image/icon/16.png', 'result.html');
