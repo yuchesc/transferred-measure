@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Transferred Measure",
+  "description": "This extension shows byteSize on the page.",
+  "version": "0.0.1",
+  "icons": {
+    "16": "image/icon/16.png",
+    "64": "image/icon/64.png"
+  },
+  "page_action": {
+    "default_icon": "image/icon/16.png"
+  },
+  "background": {
+    "scripts": ["js/background.js"]
+  },
+  "devtools_page": "devtools.html",
+  "permissions": [
+    "tabs",
+    "http://*/*",
+    "https://*/*"
+  ]
+}
