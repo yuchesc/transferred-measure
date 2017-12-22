@@ -5,6 +5,10 @@ function log(msg) {
 var result = [];
 var current = undefined;
 
+function makeCurrent(url) {
+    current = {url: url, files: []};
+    result.push(current);
+}
 
 chrome.extension.sendRequest({'action': 'tabId', 'tabId': chrome.devtools.inspectedWindow.tabId}, function () {});
 
@@ -13,27 +17,34 @@ chrome.devtools.network.onRequestFinished.addListener(
         if (request.request.url.indexOf('htt') >= 0) {
             const msg = {
                 'url': request.request.url,
+                'headersSize': request.response.headersSize,
                 'bodySize': request.response.bodySize
             };
-            if (current) {
-                current.files.push(msg);
+            if (!current) {
+                makeCurrent(request.request.url);
             }
+            current.files.push(msg);
         }
     });
 
 chrome.extension.onRequest.addListener(
     function(req, sender, res) {
+        log('devtools: ' + req.action);
         if (req.action === 'get') {
+            log('result.length = ' + result.length);
+            log(current);
             res(result);
-        } else if (req.action === 'newpage') {
-            if (req.url || !current) {
-                current = {url: req.url, files: []};
-                result.push(current);
+        } else if (req.action === 'startLink') {
+            if (req.url) {
+                makeCurrent(req.url);
             } else if (current) {
                 current.files = [];
+            } else {
+                makeCurrent('undefined');
             }
         } else if (req.action === 'clear') {
             result = [];
+            res();
         }
     }
 );

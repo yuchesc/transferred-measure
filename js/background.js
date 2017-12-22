@@ -1,14 +1,15 @@
 var currentTabId = -1;
 var links = [];
-var INTERVAL = 10 * 1000;
+var interval = 0;
 
 function gotoLink() {
     var link = links.shift();
     if (link) {
+        chrome.extension.sendRequest({'action': 'startLink', 'url': link}, function () {});
         chrome.tabs.update(currentTabId, {
             url: link
         });
-        setTimeout(gotoLink, INTERVAL);
+        setTimeout(gotoLink, interval);
     } else {
         chrome.extension.sendRequest({'action': 'finishedLinks'}, function () {});
     }
@@ -16,22 +17,22 @@ function gotoLink() {
 
 chrome.extension.onRequest.addListener(
     function(req, sender, res) {
+        console.log('background ' + req.action);
         if (req.action === 'tabId') {
             currentTabId = req.tabId;
             console.log('tabId ' + currentTabId);
         } else if (req.action === 'links') {
             links = req.links;
-            console.log('links');
+            interval = req.interval;
             console.log(links);
             gotoLink();
         }
     }
 );
 
-
+/*
 chrome.tabs.onUpdated.addListener(
     function (tabId, changeInfo, tab) {
-        console.log(changeInfo);
         if (changeInfo.status === 'loading') {
             var json = {
                 'action': 'newpage',
@@ -42,3 +43,4 @@ chrome.tabs.onUpdated.addListener(
         }
     }
 );
+*/
